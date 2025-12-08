@@ -196,9 +196,9 @@ attendClockService.lambdaUpdate()
 
 ```java
 /**
-* 作者：chenwenhao
-* 创建时间：自动填写当前日期
-* 描述：类的功能说明由 Codex 根据上下文自动填写
+* @author chenwenhao
+* @date：自动填写当前日期
+* @desc：类的功能说明由 Codex 根据上下文自动填写
   */
 ```
 
