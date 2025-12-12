@@ -184,10 +184,126 @@ attendClockService.lambdaUpdate()
     * 用一句简短中文说明你的假设，例如：
 
       > “这里我暂时假设 deleteStatus=1 表示逻辑删除，如与实际不符请指出。”
+      
+---
+
+## 9. Java 内部类使用规范（禁止滥用）
+
+> 目标：避免 AI 在生成 Java 代码时，使用大量内部类导致结构臃肿、难以维护。优先使用**顶级类 + 合理包结构**表达“归属关系”，而不是靠内部类层级。
+
+### 1. 默认规则
+
+1. **禁止**在普通业务开发中随意使用内部类（非 `static` 的成员内部类）。
+2. 如无特别说明，**所有具备独立职责的类，必须是顶级类**，放在独立的 `.java` 文件中。
+3. **不得**为了模仿 JSON Schema / DSL 的树形结构，而把所有节点都实现为内部类、嵌套内部类。
+
+### 2. 明确禁止的场景
+
+生成代码时，**不得使用内部类**的典型情况包括但不限于：
+
+1. 大型业务类中定义多个职责清晰的内部类，例如：
+
+   ```java
+   // ❌ 禁止示例
+   public class TradeEngine {
+
+       class MarketContext { ... }
+       class RiskValidator { ... }
+       class PlanReconciler { ... }
+   }
+   ```
+
+   上述类都应拆为顶级类。
+
+2. DTO / VO / Entity / Request / Response 等数据类内部，再声明内部类：
+
+   ```java
+   // ❌ 禁止示例
+   public class AiPlan {
+
+       class Market { ... }
+       class Bias { ... }
+       class CreateOrder { ... }
+   }
+   ```
+
+   这些类型应成为独立顶级类（例如 `AiPlanMarket`, `AiPlanBias`, `AiPlanCreateOrder` 等，或放在 `plan` 子包）。
+
+3. 仅为了“看起来属于某个类”“结构更像树”而使用内部类／嵌套内部类的场景，一律禁止。
+   **归属关系请使用：包名 + 类名前缀/后缀表达**，而不是内部类。
+
+### 3. 严格限制但允许的“白名单”场景
+
+只有在以下**少数情况**下，才允许 AI 生成内部类（且必须优先考虑 `static`）：
+
+1. **仅服务于外部类的私有工具类**，且无独立复用价值：
+
+   ```java
+   public class HttpClient {
+
+       // ✅ 允许：仅服务 HttpClient 的实现细节
+       private static class TimeoutHandler { ... }
+
+       private static class RetryHandler { ... }
+   }
+   ```
+
+2. **构建器（Builder）模式**，且 Builder 没有在外部单独复用需求时：
+
+   ```java
+   public class TradePlan {
+
+       // ✅ 可接受，但优先考虑顶级 Builder 类
+       public static class Builder { ... }
+   }
+   ```
+
+3. **必须紧密绑定外部类实例状态**且不会在其他地方使用的场景（极少数情况）。
+   这类场景应在代码评审中谨慎评估，默认不由 AI 生成。
+
+> 约束：AI 在生成代码时，**除非明确说明“此处允许内部类”**，否则不得主动创建任何内部类（包括非 `static` 成员类、局部类、匿名内部类）。优先使用 lambda / 顶级类替代。
+
+### 4. 可测试性 / 复用性要求
+
+在以下任一条件满足时，**类必须是顶级类**，禁止作为内部类存在：
+
+* 需要被单元测试直接引用；
+* 具有潜在复用价值；
+* 可能被注入到 Spring 容器；
+* 需要参与序列化（JSON / JPA 等）；
+* 需要暴露为公共 API（controller 入参/出参、对外 SDK、公共 domain 对象等）。
+
+### 5. 对大模型（AI 助手）的硬性要求
+
+生成 Java 代码时，AI 必须遵守：
+
+1. 当想表达“X 属于 Y 的领域下”时，**优先通过包结构 + 类名命名实现**，例如：
+
+   ```text
+   com.xxx.trade.logic.TradePlanValidator
+   com.xxx.trade.logic.TradePlanReconciler
+   ```
+
+   而不是：
+
+   ```java
+   // ❌ 禁止
+   public class TradePlan {
+       class Validator { ... }
+       class Reconciler { ... }
+   }
+   ```
+
+2. 将 JSON Schema / DSL 结构映射为 Java 类时，**一律使用顶级类 + 合理命名**，不得生成深层内部类树。
+
+3. 若确实需要内部类（符合白名单场景），应优先使用 `private static`，并在类注释中说明：
+
+    * 为什么必须是内部类；
+    * 为什么不能设计为顶级类。
 
 ---
 
-## 9. 总结
+## 10. 总结
 
 你是一个：
 
