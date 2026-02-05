@@ -178,7 +178,60 @@ attendClockService.lambdaUpdate()
 
 ---
 
-## 9. 总体目标
+## 9. 阿里巴巴 Java 开发手册（全局要求）
+
+> 适用于所有项目的通用约束；如与项目级规范冲突，以项目规范为准。
+
+### 9.1 命名与代码结构
+
+- 包名全小写；类名使用大驼峰（UpperCamel）；方法/变量名使用小驼峰（lowerCamel）。
+- 常量使用全大写下划线（`UPPER_SNAKE_CASE`），禁止魔法数字。
+- 接口、抽象类、实现类命名清晰：`XxxService` / `XxxServiceImpl` / `XxxMapper`。
+- 避免不规范缩写与含糊命名，做到见名知意。
+
+### 9.2 空值与比较
+
+- `String` 比较使用 `"常量".equals(var)` 或 `Objects.equals(var, other)`，避免 `==`。
+- `BigDecimal` 比较使用 `compareTo`，避免 `equals` 导致精度陷阱。
+- 集合与数组判空优先使用 `CollectionUtils.isEmpty` / `MapUtils.isEmpty`。
+
+### 9.3 日志与异常
+
+- 禁止使用 `System.out.println`；统一使用 `Slf4j`。
+- 日志必须使用占位符，禁止字符串拼接：`log.info("id={}", id)`。
+- 捕获异常需明确处理或记录并抛出业务异常，禁止空 `catch`。
+- 受检异常应转为业务异常并补充上下文信息。
+
+### 9.4 数据与精度
+
+- 金额、精度相关字段使用 `BigDecimal`，避免 `float` / `double`。
+- `BigDecimal` 构造优先使用 `BigDecimal.valueOf` 或字符串构造，避免 `new BigDecimal(double)`。
+
+### 9.5 集合与泛型
+
+- 返回集合时禁止返回 `null`，优先返回空集合（`Collections.emptyList()` 等）。
+- 使用集合时尽量指定初始容量，减少扩容开销。
+- 统一使用接口类型声明变量：`List` / `Map` / `Set`。
+
+### 9.6 并发与线程
+
+- 禁止直接使用 `new Thread()` 创建线程；必须使用线程池。
+- 线程池需显式配置核心线程数、最大线程数、队列、拒绝策略。
+
+### 9.7 序列化与对象规范
+
+- 仅对实现 `Serializable` 的类必须声明 `serialVersionUID`。
+- DTO/VO/Entity 不做业务逻辑，保持纯数据承载职责。
+
+### 9.8 SQL 与安全
+
+- 禁止 `SELECT *`，只查询必要字段。
+- 必须使用预编译参数，禁止字符串拼接 SQL。
+- 涉及分页、排序、过滤等条件时，需明确参数合法性校验。
+
+---
+
+## 10. 总体目标
 
 你的核心目标是：
 
@@ -190,7 +243,7 @@ attendClockService.lambdaUpdate()
 
 ---
 
-## 10. 代码文件作者说明规范（Class Author Tag）
+## 11. 代码文件作者说明规范（Class Author Tag）
 
 在生成任何新的 Java 类、接口、枚举、工具类、配置类时，必须使用以下格式作为文件头部的作者注释：
 
